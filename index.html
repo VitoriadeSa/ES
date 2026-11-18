@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusEng</title>
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            DEFAULT: '#d9480f',
+                            hover: '#c23d08',
+                            light: '#fff4e6',
+                            subtle: '#ffe8cc',
+                        },
+                        dark: '#0f172a',
+                        muted: '#64748b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --brand-orange: #d9480f;
+            --brand-orange-hover: #c23d08;
+            --brand-orange-light: #fff4e6;
+            --brand-orange-subtle: #ffe8cc;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-page);
+            color: var(--text-dark);
+        }
+
+        /* Estilos personalizáveis de botões */
+        .btn { 
+            padding: 8px 16px; 
+            background-color: var(--brand-orange); 
+            color: #ffffff; 
+            border: none; 
+            border-radius: var(--radius-md);
+            font-size: 11px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background-color: var(--brand-orange-hover);
+            box-shadow: 0 4px 10px rgba(217, 72, 15, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-dark);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--brand-orange-light);
+            border-color: var(--brand-orange);
+            color: var(--brand-orange);
+            box-shadow: none;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: var(--brand-orange-light);
+            color: var(--brand-orange);
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Toast Notifications */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: #1e293b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out forwards;
+            border-left: 4px solid var(--brand-orange);
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Sidebar Nav Link Active State */
+        .sidebar-item.active {
+            background-color: var(--brand-orange-light);
+            color: var(--brand-orange);
+            font-weight: 700;
+            border-right: 3px solid var(--brand-orange);
+        }
+    </style>
+</head>
+<body class="w-full h-full">
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container"></div>
+
+    <!-- MODAL GENÉRICO PARA AÇÕES -->
+    <div id="generic-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <h3 id="modal-title" class="font-bold text-slate-800 text-base">Ação do Sistema</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="modal-body" class="text-xs text-slate-600 mb-6 leading-relaxed">
+                Tem a certeza que deseja realizar esta operação?
+            </div>
+            <div class="flex justify-end gap-3" id="modal-actions">
+                <button onclick="closeModal()" class="btn btn-outline">Cancelar</button>
+                <button id="modal-confirm-btn" class="btn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 1. FLUXO DE AUTENTICAÇÃO TELA CHEIA (100vw / 100vh - LOGIN E REGISTO) -->
+    <!-- ========================================================================= -->
+    <div id="auth-flow" class="w-screen h-screen flex flex-col md:flex-row overflow-hidden bg-white">
+        
+        <!-- Painel Laranja Banner à Esquerda (50% ou 45% da tela) -->
+        <div class="md:w-6/12 lg:w-6/12 bg-gradient-to-br from-[#d9480f] to-[#e65100] text-white p-8 md:p-12 flex flex-col justify-between relative overflow-hidden flex-shrink-0">
+            <!-- Decorative circle overlay -->
+            <div class="absolute -top-32 -right-32 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-black/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="z-10 flex flex-col h-full justify-between">
+                <div class="flex items-center gap-3 text-2xl font-extrabold">
+                    <div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white shadow-inner">
+                        <i class="fa-solid fa-layer-group text-xl"></i>
+                    </div>
+                    <span class="tracking-tight">NexusEng</span>
+                </div>
+
+                <!-- Conteúdo centralizado perfeitamente na vertical e horizontal -->
+                <div class="items-center justify-center my-auto py-8">
+                    <!-- Conteúdo do Banner (Login) -->
+                    <div id="auth-hero-login" class="space-y-4 max-w-lg">
+                        <h2 class="text-3xl lg:text-4xl font-extrabold leading-tight">Plataforma Integrada de Eng. de Software</h2>
+                        <p class="text-sm opacity-90 leading-relaxed font-normal">Gerencie requisitos, backlog, sprints e mapas de roadmap com acompanhamento em tempo real.</p>
+                    </div>
+
+                    <!-- Conteúdo do Banner (Registo) -->
+                    <div id="auth-hero-register" class="hidden space-y-4 max-w-lg">
+                        <h2 class="text-3xl lg:text-4xl font-extrabold leading-tight">Junte-se à NexusEng</h2>
+                        <p class="text-sm opacity-90 leading-relaxed font-normal">Crie a sua conta de equipa e comece a gerir os seus projetos de software com apoio de inteligência artificial.</p>
+                    </div>
+                </div>
+
+                <div class="text-xs text-white/70 font-medium">
+                    © 2026 NexusEng Inc. Todos os direitos reservados.
+                </div>
+            </div>
+        </div>
+		
+        <!-- Formulários de Autenticação à Direita (Ocupa o restante da tela) -->
+        <div class="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-16 bg-white overflow-y-auto">
+            <div class="w-full max-w-md space-y-6">
+                
+                <!-- ================= 1. PÁGINA: LOGIN ================= -->
+                <div id="view-login" class="space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Início de Sessão</h2>
+                        <p class="text-xs text-slate-500 mt-1">Insira as suas credenciais corporativas para aceder à plataforma.</p>
+                    </div>
+
+                    <form onsubmit="handleLogin(event)" class="space-y-4">
+                        <div class="space-y-1">
+                            <label class="block text-xs font-semibold text-slate-700">E-mail Corporativo</label>
+                            <input type="email" id="login-email" required value="xxxxx@xxx.xx" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition bg-slate-50/50">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-xs font-semibold text-slate-700">Palavra-passe</label>
+                            <input type="password" id="login-password" required value="•••••••" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition bg-slate-50/50">
+                        </div>
+
+                        <div class="pt-2 space-y-2">
+                            <button type="submit" class="btn w-full py-3 text-xs font-bold uppercase tracking-wider">Iniciar Sessão</button>
+                            <button type="button" onclick="toggleAuthView('register')" class="btn btn-outline w-full py-3 text-xs font-bold uppercase tracking-wider">Criar Nova Conta</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ================= 2. PÁGINA: REGISTO ================= -->
+                <div id="view-register" class="hidden space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Criar Conta</h2>
+                        <p class="text-xs text-slate-500 mt-1">Preencha os seus dados para registar uma nova conta.</p>
+                    </div>
+
+                    <form onsubmit="handleRegister(event)" class="space-y-4">
+                        <div class="space-y-1">
+                            <label class="block text-xs font-semibold text-slate-700">E-mail Corporativo</label>
+                            <input type="email" id="reg-email" required value="xxxxx@xxx.xx" placeholder="exemplo@empresa.com" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition bg-slate-50/50">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-xs font-semibold text-slate-700">Palavra-passe</label>
+                            <input type="password" id="reg-pass" required value="•••••••" placeholder="••••••••" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition bg-slate-50/50">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-xs font-semibold text-slate-700">Confirmar Palavra-passe</label>
+                            <input type="password" id="reg-pass-confirm" required value="•••••••" placeholder="••••••••" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition bg-slate-50/50">
+                        </div>
+
+                        <div class="pt-2 space-y-2">
+                            <button type="submit" class="btn w-full py-3 text-xs font-bold uppercase tracking-wider">Registar Conta</button>
+                            <button type="button" onclick="toggleAuthView('login')" class="btn btn-outline w-full py-3 text-xs font-bold uppercase tracking-wider">Já Tenho Uma Conta</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- 2. APLICAÇÃO PRINCIPAL TELA CHEIA (NEXUSENG DASHBOARD & VISTAS) -->
+    <!-- ========================================================================= -->
+    <div id="app-flow" class="hidden w-screen h-screen flex flex-col md:flex-row overflow-hidden bg-slate-100">
+        
+        <!-- SIDEBAR LATERAL -->
+        <aside class="w-full md:w-64 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-20">
+            
+            <!-- Brand Logótipo -->
+            <div class="p-4 border-b border-slate-200 flex items-center gap-3 font-extrabold text-slate-800 text-base">
+                <div class="w-8 h-8 bg-[#d9480f] rounded-md flex items-center justify-center text-white text-sm shadow-sm">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <span>NexusEng</span>
+            </div>
+
+            <!-- Workspace Selector -->
+            <div class="p-4 bg-slate-50/50 border-b border-slate-200 text-xs">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider block mb-1">Workspace</span>
+                <select id="app-workspace-select" onchange="changeWorkspace(this.value)" class="w-full p-2 bg-white border border-slate-200 rounded-md text-xs font-medium text-slate-700 outline-none focus:border-orange-500 transition">
+                    <option value="workspace-1" selected>Workspace 1</option>
+                    <option value="workspace-2">Workspace 2</option>
+                    <option value="workspace-3">Workspace 3</option>
+                </select>
+            </div>
+
+            <!-- Menu de Navegação -->
+            <ul class="flex-1 py-2 overflow-y-auto space-y-0.5 text-xs font-medium">
+                <li>
+                    <a href="#" onclick="navigateTo('dashboard', event)" id="nav-dashboard" class="sidebar-item active flex items-center gap-3 px-5 py-3 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition">
+                        <i class="fa-solid fa-chart-pie w-4 text-center"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="navigateTo('requests-list', event)" id="nav-requests-list" class="sidebar-item flex items-center gap-3 px-5 py-3 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition">
+                        <i class="fa-solid fa-list-check w-4 text-center"></i>
+                        <span>Lista de Pedidos</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="navigateTo('voting', event)" id="nav-voting" class="sidebar-item flex items-center gap-3 px-5 py-3 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition">
+                        <i class="fa-solid fa-file-invoice w-4 text-center"></i>
+                        <span>Pedidos &amp; Votação</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="navigateTo('submit-request', event)" id="nav-submit-request" class="sidebar-item flex items-center gap-3 px-5 py-3 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition">
+                        <i class="fa-solid fa-paper-plane w-4 text-center"></i>
+                        <span>Submeter Pedido</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="navigateTo('backlog', event)" id="nav-backlog" class="sidebar-item flex items-center gap-3 px-5 py-3 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition">
+                        <i class="fa-solid fa-box-archive w-4 text-center"></i>
+                        <span>Product Backlog</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="navigateTo('sprints', event)" id="nav-sprints" class="sidebar-item flex items-center gap-3 px-5 py-3 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition">
+                        <i class="fa-solid fa-timeline w-4 text-center"></i>
+                        <span>Board de Sprints</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="navigateTo('roadmap', event)" id="nav-roadmap" class="sidebar-item flex items-center gap-3 px-5 py-3 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition">
+                        <i class="fa-solid fa-chart-line w-4 text-center"></i>
+                        <span>Roadmap &amp; Estatísticas</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="navigateTo('teams', event)" id="nav-teams" class="sidebar-item flex items-center gap-3 px-5 py-3 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition">
+                        <i class="fa-solid fa-users-rectangle w-4 text-center"></i>
+                        <span>Workspace &amp; Equipas</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="navigateTo('settings', event)" id="nav-settings" class="sidebar-item flex items-center gap-3 px-5 py-3 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition">
+                        <i class="fa-solid fa-gear w-4 text-center"></i>
+                        <span>Configuração da Conta</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- User Footer & Logout -->
+            <div class="p-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div class="flex items-center gap-2 overflow-hidden">
+                    <div class="w-8 h-8 rounded-full bg-[#d9480f] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        <span id="user-avatar-initials">PO</span>
+                    </div>
+                    <div class="truncate">
+                        <p id="user-display-email" class="text-xs font-bold text-slate-800 truncate">xxxxx@xxx.xx</p>
+                        <p class="text-[10px] text-slate-500 font-medium">Product Owner</p>
+                    </div>
+                </div>
+                <!--<button onclick="handleLogout()" title="Terminar Sessão" class="text-slate-400 hover:text-red-600 p-2 transition">
+                    <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                </button>-->
+            </div>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL DE CONTEÚDO -->
+        <main class="flex-1 flex flex-col bg-slate-100 overflow-hidden">
+            
+            <!-- Top Header Bar -->
+            <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10">
+                <div>
+                    <h1 id="page-header-title" class="text-base font-bold text-slate-800">Dashboard Principal</h1>
+                    <p id="page-header-subtitle" class="text-xs text-slate-500 mt-0.5">Visão geral unificada do projeto</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="border border-orange-200 bg-orange-50 text-orange-600 px-3 py-1 rounded-full text-xs font-semibold">
+                        Product Owner
+                    </span>
+                </div>
+            </header>
+
+            <!-- ZONA DE CONTEÚDO DAS VISTAS -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6" id="views-container">
+
+                <!-- ================= 3. PÁGINA: DASHBOARD PRINCIPAL ================= -->
+                <section id="page-dashboard" class="view-panel space-y-4">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                            <h2 class="text-xs font-bold text-slate-800">Notificações Recentes</h2>
+                            <span class="text-[10px] text-slate-400">Atualizado agora</span>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            • Novo comentário de <strong>@João Santos</strong> no seu pedido X<br>
+                            • Foi mencionado na discussão do Pedido <strong>#FT-X</strong> (Exportação PDF)
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                            <h2 class="text-xs font-bold text-slate-800">Resumo de Atividade Recente</h2>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            • Merge PR #304: Refatoração X concluída com sucesso<br>
+                            • Novo comentário registado no pedido <strong>#FT-X</strong> por <strong>@João Santos</strong>
+                        </p>
+                    </div>
+                </section>
+
+                <!-- ================= 4. PÁGINA: LISTA DE PEDIDOS ================= -->
+                <section id="page-requests-list" class="view-panel hidden space-y-6">
+                    
+                    <!-- Card Pedidos Pendentes -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
+                            <h2 class="text-xs font-bold text-slate-800">Pedidos Pendentes</h2>
+                            <div class="flex items-center gap-2">
+                                <i class="fa fa-filter text-xs text-slate-400"></i>
+                                <select onchange="filterRequestsTable(this.value)" class="text-xs p-1.5 border border-slate-200 rounded-md outline-none bg-white">
+                                    <option value="ALL">Filtrar etiqueta...</option>
+                                    <option value="Segurança">Segurança</option>
+                                    <option value="User Story">User Stories</option>
+                                    <option value="Relatórios">Relatórios</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- IA Suggestion Banner -->
+                        <div class="border border-orange-500 bg-[#ff7700] text-white p-3 rounded-md text-xs font-medium shadow-sm">
+                            <strong>[ Sugestão da IA ]:</strong><br>
+                            O pedido #FT-Y tem alta prioridade recomendada devido ao número de votos.
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="border-b-2 border-slate-200 bg-slate-50 text-slate-500 uppercase text-[10px]">
+                                        <th class="p-2.5">ID</th>
+                                        <th class="p-2.5">Título</th>
+                                        <th class="p-2.5">Etiqueta</th>
+                                        <th class="p-2.5">Votos</th>
+                                        <th class="p-2.5">Aprovar</th>
+                                        <th class="p-2.5">Rejeitar</th>
+                                        <th class="p-2.5">Eliminar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-pending-body">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Card Pedidos Aprovados -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                            <h2 class="text-xs font-bold text-slate-800">Pedidos Aprovados</h2>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="border-b-2 border-slate-200 bg-slate-50 text-slate-500 uppercase text-[10px]">
+                                        <th class="p-2.5">ID</th>
+                                        <th class="p-2.5">Título</th>
+                                        <th class="p-2.5">Etiqueta</th>
+                                        <th class="p-2.5">Votos</th>
+                                        <th class="p-2.5">Estado</th>
+                                        <th class="p-2.5">Editar</th>
+                                        <th class="p-2.5">Eliminar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-approved-body">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Card Pedidos Rejeitados -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                            <h2 class="text-xs font-bold text-slate-800">Pedidos Rejeitados</h2>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="border-b-2 border-slate-200 bg-slate-50 text-slate-500 uppercase text-[10px]">
+                                        <th class="p-2.5">ID</th>
+                                        <th class="p-2.5">Título</th>
+                                        <th class="p-2.5">Etiqueta</th>
+                                        <th class="p-2.5">Votos</th>
+                                        <th class="p-2.5">Estado</th>
+                                        <th class="p-2.5">Editar</th>
+                                        <th class="p-2.5">Eliminar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-rejected-body">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ================= 5. PÁGINA: DETALHE & VOTAÇÃO ================= -->
+                <section id="page-voting" class="view-panel hidden space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <button onclick="navigateTo('submit-request', event)" class="btn">
+                            <i class="fa-solid fa-plus"></i> NOVO PEDIDO
+                        </button>
+                        <div class="flex gap-2">
+                            <select class="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 bg-white">
+                                <option>Todas as Tags</option>
+                                <option>Segurança</option>
+                            </select>
+                            <select class="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 bg-white">
+                                <option>Todos os Estados</option>
+                                <option>Aprovado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Voting Cards Container -->
+                    <div id="voting-cards-container" class="space-y-4">
+                        <!-- Dynamic -->
+                    </div>
+                </section>
+
+                <!-- ================= 6. PÁGINA: SUBMETER PEDIDO ================= -->
+                <section id="page-submit-request" class="view-panel hidden">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-xl mx-auto space-y-4">
+                        <div class="border-b border-slate-100 pb-3">
+                            <h2 class="text-sm font-bold text-slate-800">Formulário de Pedido</h2>
+                        </div>
+                        
+                        <form onsubmit="handleCreateRequest(event)" class="space-y-4">
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-slate-700">Título do Pedido</label>
+                                <input type="text" id="req-title" required placeholder="Ex: Integração com Stripe / Pagamentos" class="w-full p-2.5 border border-slate-200 rounded-md text-xs outline-none focus:border-orange-500 transition">
+                            </div>
+                            
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-slate-700">Etiqueta</label>
+                                <select id="req-tag" class="w-full p-2.5 border border-slate-200 rounded-md text-xs outline-none focus:border-orange-500 transition bg-white">
+                                    <option value="Segurança">Segurança</option>
+                                    <option value="Relatórios">Relatórios</option>
+                                    <option value="Integração">Integração</option>
+                                    <option value="User Story">User Story</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-slate-700">Descrição Detalhada</label>
+                                <textarea id="req-desc" required rows="4" placeholder="Descreva os requisitos funcionais e detalhes técnicos..." class="w-full p-2.5 border border-slate-200 rounded-md text-xs outline-none focus:border-orange-500 transition"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn w-full py-3">Submeter Pedido</button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- ================= 7. PÁGINA: PRODUCT BACKLOG ================= -->
+                <section id="page-backlog" class="view-panel hidden space-y-6">
+                    
+                    <!-- Kanban Board -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        
+                        <!-- Coluna To Do -->
+                        <div class="bg-slate-100 p-3 rounded-xl border border-slate-200 min-h-[350px]">
+                            <h3 class="text-xs font-bold text-slate-800 mb-3 border-b border-slate-200 pb-2 flex justify-between items-center">
+                                <span>To Do</span>
+                            </h3>
+                            <div class="bg-white p-3 rounded-md border-l-4 border-[#d9480f] shadow-sm text-xs space-y-2">
+                                <strong class="text-slate-800">#FT-Y</strong>
+                                <p class="text-slate-500 text-[10px]">Exportação Relatórios PDF</p>
+                                
+                                <div class="space-y-1.5 mt-2 text-[11px] text-slate-600">
+                                    <label class="block font-semibold">Estado</label>
+                                    <select class="w-full p-1.5 border rounded bg-slate-50 text-xs">
+                                        <option value="todo" selected>Por fazer</option>
+                                        <option value="doing">Em desenvolvimento</option>
+                                        <option value="done">Concluído</option>
+                                    </select>
+
+                                    <label class="block font-semibold"><i class="fa-solid fa-link"></i> Pedido associado</label>
+                                    <select class="w-full p-1.5 border rounded bg-slate-50 text-xs">
+                                        <option value="">Sem funcionalidade associada</option>
+                                        <option value="P01-X">#P01-X — Personas</option>
+                                        <option value="P02-Y">#P02-Y — Perfil do utilizador</option>
+                                    </select>
+
+                                    <label class="block font-semibold"><i class="fa-solid fa-flag-checkered"></i> Sprint</label>
+                                    <select class="w-full p-1.5 border rounded bg-slate-50 text-xs">
+                                        <option value="S01">Sprint 01 — Planeamento inicial</option>
+                                        <option value="S02">Sprint 02 — Desenvolvimento</option>
+                                    </select>
+
+                                    <div class="grid grid-cols-2 gap-2 mt-1">
+                                        <div>
+                                            <label class="block font-semibold">Impacto</label>
+                                            <select class="w-full p-1 border rounded text-xs bg-slate-50"><option>Alto</option><option>Médio</option></select>
+                                        </div>
+                                        <div>
+                                            <label class="block font-semibold">Esforço</label>
+                                            <select class="w-full p-1 border rounded text-xs bg-slate-50"><option>Médio</option><option>Alto</option></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onclick="showToast('Alterações salvas no Backlog!')" class="btn w-full mt-2 py-1.5"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                            </div>
+                        </div>
+
+                        <!-- Coluna In Progress -->
+                        <div class="bg-slate-100 p-3 rounded-xl border border-slate-200 min-h-[350px]">
+                            <h3 class="text-xs font-bold text-slate-800 mb-3 border-b border-slate-200 pb-2 flex justify-between items-center">
+                                <span>In Progress</span>
+                                <span class="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full text-[10px] font-bold">1</span>
+                            </h3>
+                            <div class="bg-white p-3 rounded-md border-l-4 border-[#d9480f] shadow-sm text-xs space-y-1">
+                                <strong class="text-slate-800">#FT-Y Autenticação SSO</strong>
+                                <p class="text-slate-500 text-[10px]">Em desenvolvimento ativo pela Equipa 1</p>
+                            </div>
+                            <div class="mt-3 p-2 bg-white border border-slate-200 rounded text-center text-xs text-slate-400 font-bold cursor-pointer hover:bg-slate-50">+</div>
+                        </div>
+
+                        <!-- Coluna Done -->
+                        <div class="bg-slate-100 p-3 rounded-xl border border-slate-200 min-h-[350px]">
+                            <h3 class="text-xs font-bold text-slate-800 mb-3 border-b border-slate-200 pb-2 flex justify-between items-center">
+                                <span>Done</span>
+                                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-bold">1</span>
+                            </h3>
+                            <div class="bg-white p-3 rounded-md border-l-4 border-[#d9480f] shadow-sm text-xs space-y-1">
+                                <strong class="text-slate-800">#FT-W Modo Escuro</strong>
+                                <p class="text-green-600 font-semibold text-[10px]">Concluído na Sprint 01</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Histórico de Tarefas -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                        <h4 class="text-xs font-bold text-slate-800">Histórico de Tarefas</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="border-b-2 border-slate-200 bg-slate-50 text-slate-500 uppercase text-[10px]">
+                                        <th class="p-2.5">Tarefa</th>
+                                        <th class="p-2.5">Responsável</th>
+                                        <th class="p-2.5">Estado</th>
+                                        <th class="p-2.5">Sprint</th>
+                                        <th class="p-2.5">Detalhes / Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-slate-100">
+                                        <td class="p-2.5">
+                                            <strong>#T-001</strong>
+                                            <p class="text-[10px] text-slate-500">Definir prioridades do backlog</p>
+                                        </td>
+                                        <td class="p-2.5">João Santos</td>
+                                        <td class="p-2.5"><span class="tag">Em progresso</span></td>
+                                        <td class="p-2.5">Sprint 01</td>
+                                        <td class="p-2.5">
+                                            <div class="flex gap-1">
+                                                <button onclick="toggleDetails('details-T001')" class="btn py-1 px-2 text-[10px]" title="Ver detalhes"><i class="fas fa-eye"></i></button>
+                                                <button onclick="showToast('Edição de tarefa ativada')" class="btn py-1 px-2 text-[10px]" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                                                <button onclick="showToast('Tarefa eliminada')" class="btn py-1 px-2 text-[10px]" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr id="details-T001" class="hidden bg-slate-50">
+                                        <td colspan="5" class="p-3 text-xs border-b border-slate-200">
+                                            <div class="p-3 bg-white rounded border border-slate-200 space-y-2">
+                                                <strong class="text-slate-800">Descrição completa</strong>
+                                                <ul class="list-disc pl-5 space-y-1 text-slate-600 text-[11px]">
+                                                    <li><strong>Pedido Associado:</strong> #FT-X - Relatórios PDF</li>
+                                                    <li><strong>Sprint:</strong> Sprint 01</li>
+                                                    <li><strong>Equipa Responsável:</strong> Equipa 1</li>
+                                                </ul>
+                                                <p class="text-[11px] text-slate-700"><strong>Resultado esperado:</strong> Backlog priorizado e pronto para desenvolvimento.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ================= 8. PÁGINA: BOARD DE SPRINTS ================= -->
+                <section id="page-sprints" class="view-panel hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        
+                        <!-- Personas -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                            <h3 class="font-bold text-xs border-b border-slate-100 pb-2 text-slate-800">Personas</h3>
+                            <div class="p-3 bg-slate-50 border rounded-md space-y-2 text-xs">
+                                <strong>#P01-X Roberto Alves</strong>
+                                
+                                <label class="block text-[10px] font-semibold text-slate-500">Estado</label>
+                                <select class="w-full p-1.5 border rounded bg-white text-xs">
+                                    <option value="done" selected>Concluído</option>
+                                    <option value="doing">Em desenvolvimento</option>
+                                </select>
+
+                                <label class="block text-[10px] font-semibold text-slate-500"><i class="fa-solid fa-pencil"></i> Conteúdo</label>
+                                <textarea class="w-full p-2 border rounded text-xs bg-white" rows="2" placeholder="Descreva a persona..."></textarea>
+
+                                <div class="flex gap-2 pt-1">
+                                    <button onclick="showToast('Persona guardada!')" class="btn flex-1"><i class="fa-solid fa-floppy-disk"></i></button>
+                                    <button onclick="showToast('Assistente de IA acionado!')" class="btn flex-1"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scenarios -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                            <h3 class="font-bold text-xs border-b border-slate-100 pb-2 text-slate-800">Scenarios</h3>
+                            <div class="p-3 bg-slate-50 border rounded-md space-y-1 text-xs">
+                                <strong>#S01-Y Usar aplicação</strong>
+                                <p class="text-slate-500 text-[11px]">Acesso rápido ao roadmap</p>
+                            </div>
+                            <div class="p-2 border border-slate-200 rounded text-center text-xs text-slate-400 font-bold cursor-pointer hover:bg-slate-50">+</div>
+                        </div>
+
+                        <!-- User Stories -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                            <h3 class="font-bold text-xs border-b border-slate-100 pb-2 text-slate-800">User Stories</h3>
+                            <div class="p-3 bg-slate-50 border rounded-md space-y-2 text-xs">
+                                <strong>#US3-W Autenticação SSO</strong>
+                                <p class="text-slate-500 text-[10px]">Roberto Alves</p>
+
+                                <label class="block text-[10px] font-semibold text-slate-500"><i class="fa-solid fa-pencil"></i> Conteúdo da US</label>
+                                <textarea class="w-full p-2 border rounded text-xs bg-white" rows="2" placeholder="Critérios de aceitação..."></textarea>
+                                
+                                <div class="flex gap-2 pt-1">
+                                    <button onclick="showToast('User Story guardada!')" class="btn flex-1"><i class="fa-solid fa-floppy-disk"></i></button>
+                                    <button onclick="showToast('IA otimizou a User Story!')" class="btn flex-1"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="border-slate-200">
+
+                    <!-- Sprint Kanban Board -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div class="flex items-center gap-3">
+                                <label class="text-xs font-bold text-slate-700">Sprint:</label>
+                                <select class="text-xs p-1.5 border border-slate-200 rounded-md outline-none bg-white font-medium">
+                                    <option value="sprint-1" selected>Sprint 1</option>
+                                    <option value="sprint-2">Sprint 2</option>
+                                </select>
+                                <button onclick="showToast('Nova sprint adicionada')" class="btn py-1.5 px-2.5"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                            <h2 class="text-sm font-bold text-slate-800">Sprint 1</h2>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="p-3 bg-slate-100 rounded-lg border border-slate-200 min-h-[200px]">
+                                <h4 class="font-bold text-xs mb-3 border-b pb-1 text-slate-800">To Do</h4>
+                                <div class="bg-white p-3 rounded border-l-4 border-[#d9480f] shadow-sm text-xs relative pb-8 space-y-1">
+                                    <strong>#F01-X</strong>
+                                    <p class="text-slate-600">Editar Users.</p>
+                                    <button onclick="showToast('Edição de tarefa')" class="btn py-1 px-2 text-[9px] absolute right-2 bottom-2"><i class="fas fa-pencil"></i></button>
+                                </div>
+								<br>
+								<div class="p-2 border border-slate-200 rounded text-center text-xs text-slate-400 font-bold cursor-pointer hover:bg-slate-50">+</div>
+                            </div>
+                            <div class="p-3 bg-slate-100 rounded-lg border border-slate-200 min-h-[200px]">
+                                <h4 class="font-bold text-xs mb-3 border-b pb-1 text-slate-800">In Progress</h4>
+                                <div class="bg-white p-3 rounded border-l-4 border-[#d9480f] shadow-sm text-xs relative pb-8 space-y-1">
+                                    <strong>#F02-Y</strong>
+                                    <p class="text-slate-600">Usar a aplicação.</p>
+                                    <button onclick="showToast('Edição de tarefa')" class="btn py-1 px-2 text-[9px] absolute right-2 bottom-2"><i class="fas fa-pencil"></i></button>
+                                </div>
+								<br>
+								<div class="p-2 border border-slate-200 rounded text-center text-xs text-slate-400 font-bold cursor-pointer hover:bg-slate-50">+</div>
+                            </div>
+                            <div class="p-3 bg-slate-100 rounded-lg border border-slate-200 min-h-[200px]">
+                                <h4 class="font-bold text-xs mb-3 border-b pb-1 text-slate-800">Done</h4>
+                                <div class="bg-white p-3 rounded border-l-4 border-[#d9480f] shadow-sm text-xs relative pb-8 space-y-1">
+                                    <strong>#F03-W</strong>
+                                    <p class="text-slate-600">Fazer Login na aplicação.</p>
+                                    <button onclick="showToast('Edição de tarefa')" class="btn py-1 px-2 text-[9px] absolute right-2 bottom-2"><i class="fas fa-pencil"></i></button>
+                                </div>
+								<br>
+								<div class="p-2 border border-slate-200 rounded text-center text-xs text-slate-400 font-bold cursor-pointer hover:bg-slate-50">+</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+               <!-- ================= 9. PÁGINA: ROADMAP DO PRODUTO ================= -->
+				<section id="page-roadmap" class="view-panel hidden space-y-6">
+					<!-- Grelha de Métricas -->
+					<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+						<div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+							<h3 class="text-lg font-extrabold text-[#d9480f]">18</h3>
+							<p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Pedidos Submetidos</p>
+						</div>
+						<div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+							<h3 class="text-lg font-extrabold text-[#d9480f]">2 / 4</h3>
+							<p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Pedidos Aprovados / Rejeitados</p>
+						</div>
+						<div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+							<h3 class="text-lg font-extrabold text-[#d9480f]">4 dias</h3>
+							<p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Lead Time</p>
+						</div>
+						<div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+							<h3 class="text-lg font-extrabold text-[#d9480f]">4 dias</h3>
+							<p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Cycle Time</p>
+						</div>
+						<div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+							<h3 class="text-lg font-extrabold text-[#d9480f]">5 hrs / dia</h3>
+							<p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Carga de Trabalho</p>
+						</div>
+						<div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+							<h3 class="text-lg font-extrabold text-[#d9480f]">70%</h3>
+							<p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Progresso</p>
+						</div>
+						<div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+							<h3 class="text-lg font-extrabold text-[#d9480f]">5</h3>
+							<p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Funcionalidades por Release</p>
+						</div>
+					</div>
+
+					<!-- Linha do Tempo & Gestão de Releases -->
+					<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-5">
+						<div class="flex justify-between items-center border-b border-slate-100 pb-3">
+							<h2 class="text-xs font-bold text-slate-800">Linha do Tempo de Releases</h2>
+							<button onclick="showToast('Formulário para criar Workspace')" class="btn py-1.5 px-3">
+								<i class="fa-solid fa-plus"></i>
+							</button>
+						</div>
+
+						<!-- Release v1.2 Card -->
+						<div class="bg-white rounded-r-lg border border-slate-200 border-l-4 border-l-[#d9480f] p-3.5 space-y-2">
+							<h4 class="text-xs font-bold text-slate-800">Release v1.2 - Novembro 2026</h4>
+							<p class="text-[11px] text-slate-500">Módulos de relatórios avançados e exportações.</p>
+							
+							<div class="flex gap-2 justify-end pt-1">
+								<button onclick="toggleReleaseForm()" class="btn py-1.5 px-3 text-xs" title="Editar Release">
+									<i class="fa-solid fa-pencil"></i>
+								</button>
+								<button onclick="showToast('Confirmar eliminação de Release')" class="btn py-1.5 px-3 text-xs">
+									<i class="fa-solid fa-trash"></i>
+								</button>
+							</div>
+						</div>
+
+						<!-- Formulário de Gestão da Release v1.0 (Oculto por predefinição) -->
+						<div id="release-form-container" class="hidden w-full bg-white p-6 border border-slate-200 rounded-xl space-y-4 font-sans mt-4">
+							<h4 class="text-lg font-bold text-slate-800 border-b border-slate-200 pb-3">
+								Gestão da Release v1.0
+							</h4>
+
+							<div class="space-y-4">
+								<div>
+									<label for="release-name" class="block text-xs font-semibold text-slate-700 mb-1">
+										Nome da release
+									</label>
+									<input type="text" id="release-name" name="release-name"
+										value="Release v1.1 - Outubro 2026"
+										class="w-full p-2.5 border border-slate-300 rounded-md text-xs focus:ring-2 focus:ring-[#d9480f] focus:outline-none">
+								</div>
+
+								<div>
+									<label for="release-features" class="block text-xs font-semibold text-slate-700 mb-1">
+										Funcionalidades
+									</label>
+									<select id="release-features" name="release-features[]" multiple size="5"
+										class="w-full p-2 border border-slate-300 rounded-md text-xs bg-white text-slate-700 focus:ring-2 focus:ring-[#d9480f] focus:outline-none">
+										<option value="sso" class="p-1.5">Autenticação SSO</option>
+										<option value="security" class="p-1.5">Melhorias de Segurança</option>
+										<option value="ui" class="p-1.5">Correções de UI</option>
+										<option value="performance" class="p-1.5">Melhorias de Performance</option>
+										<option value="reports" class="p-1.5">Relatórios</option>
+									</select>
+									<span class="block text-[11px] text-slate-500 mt-1">
+										Utiliza Ctrl (Windows) ou Cmd (Mac) para selecionar várias opções.
+									</span>
+								</div>
+
+								<div class="flex flex-wrap gap-4">
+									<div class="flex-1 min-w-[180px]">
+										<label for="release-start" class="block text-xs font-semibold text-slate-700 mb-1">
+											Data de início
+										</label>
+										<input type="date" id="release-start" name="release-start"
+											class="w-full p-2 border border-slate-300 rounded-md text-xs focus:ring-2 focus:ring-[#d9480f] focus:outline-none">
+									</div>
+
+									<div class="flex-1 min-w-[180px]">
+										<label for="release-end" class="block text-xs font-semibold text-slate-700 mb-1">
+											Data de fim
+										</label>
+										<input type="date" id="release-end" name="release-end"
+											class="w-full p-2 border border-slate-300 rounded-md text-xs focus:ring-2 focus:ring-[#d9480f] focus:outline-none">
+									</div>
+								</div>
+
+								<div>
+									<label for="release-status" class="block text-xs font-semibold text-slate-700 mb-1">
+										Estado da release
+									</label>
+									<select id="release-status" name="release-status"
+										class="w-full p-2.5 border border-slate-300 rounded-md text-xs bg-white text-slate-700 focus:ring-2 focus:ring-[#d9480f] focus:outline-none">
+										<option value="planeada">Planeada</option>
+										<option value="progresso" selected>Em progresso</option>
+										<option value="lancada">Lançada</option>
+									</select>
+								</div>
+
+								<div class="flex justify-end gap-2 pt-2">
+									<button onclick="toggleReleaseForm(); showToast('Release guardada com sucesso!');" class="btn text-xs py-2 px-4">
+										Guardar Alterações
+									</button>
+								</div>
+							</div>
+						</div>
+					
+
+					<!-- Planeamento Temporal do Produto (Gráfico Gantt) -->
+					<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+						<div class="border-b border-slate-100 pb-3">
+							<h2 class="text-xs font-bold text-slate-800">Planeamento Temporal do Produto</h2>
+						</div>
+
+						<!-- Filtros do Roadmap -->
+						<div class="flex flex-wrap gap-3 my-2">
+							<div class="flex-1 min-w-[130px]">
+								<label for="roadmap-period" class="block text-xs text-slate-700 mb-1">Período</label>
+								<select id="roadmap-period" class="w-full p-2 border border-slate-300 rounded-md text-xs bg-white">
+									<option>Próximos 3 meses</option>
+									<option>Próximos 6 meses</option>
+									<option>Próximos 12 meses</option>
+								</select>
+							</div>
+
+							<div class="flex-1 min-w-[130px]">
+								<label for="roadmap-type" class="block text-xs text-slate-700 mb-1">Tipo de elemento</label>
+								<select id="roadmap-type" class="w-full p-2 border border-slate-300 rounded-md text-xs bg-white">
+									<option>Todos</option>
+									<option>Releases</option>
+									<option>Funcionalidades</option>
+									<option>Sprints</option>
+								</select>
+							</div>
+						</div>
+
+						<!-- Tabela tipo Gantt -->
+						<div class="overflow-x-auto">
+							<div class="min-w-[550px]">
+								<!-- Cabeçalho Temporal -->
+								<div class="grid grid-cols-[180px_1fr_1fr_1fr] gap-1.5 py-2.5 border-b-2 border-[#d9480f] font-bold text-xs text-slate-800">
+									<div>Release / Funcionalidade</div>
+									<div class="text-center">Out. 2026</div>
+									<div class="text-center">Nov. 2026</div>
+									<div class="text-center">Dez. 2026</div>
+								</div>
+
+								<!-- Release v1.1 -->
+								<div class="grid grid-cols-[180px_1fr_1fr_1fr] gap-1.5 items-center my-2 min-h-[35px]">
+									<span class="text-xs text-slate-700">Release v1.1</span>
+									<div class="col-start-2 bg-[#d9480f] text-white p-2 rounded text-[11px] text-center font-medium">
+										Concluído
+									</div>
+								</div>
+
+								<!-- Release v1.2 -->
+								<div class="grid grid-cols-[180px_1fr_1fr_1fr] gap-1.5 items-center my-2 min-h-[35px]">
+									<span class="text-xs text-slate-700">Release v1.2</span>
+									<div class="col-span-2 col-start-2 bg-[#a13105] text-white p-2 rounded text-[11px] text-center font-medium">
+										Em desenvolvimento
+									</div>
+								</div>
+
+								<!-- Autenticação SSO -->
+								<div class="grid grid-cols-[180px_1fr_1fr_1fr] gap-1.5 items-center my-2 min-h-[35px]">
+									<span class="text-xs text-slate-700">Autenticação SSO</span>
+									<div class="col-start-3 bg-[#d9480f] text-white p-2 rounded text-[11px] text-center font-medium">
+										Concluído
+									</div>
+								</div>
+
+								<!-- Sprint 2 -->
+								<div class="grid grid-cols-[180px_1fr_1fr_1fr] gap-1.5 items-center my-2 min-h-[35px]">
+									<span class="text-xs text-slate-700">Sprint 2</span>
+									<div class="col-span-2 col-start-3 bg-[#f27f27] text-white p-2 rounded text-[11px] text-center font-medium">
+										Por fazer
+									</div>
+								</div>
+
+								<!-- Relatórios avançados -->
+								<div class="grid grid-cols-[180px_1fr_1fr_1fr] gap-1.5 items-center my-2 min-h-[35px]">
+									<span class="text-xs text-slate-700">Relatórios avançados</span>
+									<div class="col-span-2 col-start-3 bg-[#f27f27] text-white p-2 rounded text-[11px] text-center font-medium">
+										Por Fazer
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Legenda -->
+						<div class="flex flex-wrap gap-4 pt-3 text-xs text-slate-600 border-t border-slate-100">
+							<span class="flex items-center gap-1.5">
+								<i class="fa-solid fa-square text-[#f27f27]"></i> Por Fazer
+							</span>
+							<span class="flex items-center gap-1.5">
+								<i class="fa-solid fa-square text-[#a13105]"></i> Em desenvolvimento
+							</span>
+							<span class="flex items-center gap-1.5">
+								<i class="fa-solid fa-square text-[#d9480f]"></i> Concluído
+							</span>
+						</div>
+					</div>
+				</section>
+
+                <!-- ================= 10. PÁGINA: WORKSPACES & EQUIPAS ================= -->
+                <section id="page-teams" class="view-panel hidden space-y-6">
+                    
+                    <!-- Workspaces -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <h2 class="text-xs font-bold text-slate-800 border-b pb-2">Gestão de Workspaces</h2>
+                        
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                            <label class="font-semibold text-slate-700">Workspace:</label>
+                            <select class="p-2 border border-slate-200 rounded-md bg-white text-xs min-w-[150px]">
+                                <option value="workspace-1" selected>Workspace 1</option>
+                                <option value="workspace-2">Workspace 2</option>
+                            </select>
+                            <button onclick="showToast('Criar Workspace')" class="btn py-2 px-3"><i class="fa-solid fa-plus"></i></button>
+                            <button onclick="showToast('Editar Workspace')" class="btn py-2 px-3"><i class="fa-solid fa-pencil"></i></button>
+                            <button onclick="showToast('Eliminar Workspace')" class="btn py-2 px-3"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Teams -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <h2 class="text-xs font-bold text-slate-800">Equipas do Workspace</h2>
+                            <button onclick="showToast('Criar Equipa')" class="btn"><i class="fa-solid fa-plus"></i> Nova Equipa</button>
+                        </div>
+
+                        <!-- Equipa 1 -->
+                        <div class="p-4 border-l-4 border-l-[#d9480f] border-t border-r border-b border-slate-200 rounded-r-lg space-y-3 bg-white">
+                            <div class="flex justify-between items-center">
+                                <h2 class="font-bold text-xs text-slate-800">Equipa 1</h3>
+                                <div class="flex gap-1">
+                                    <button onclick="showToast('Editar Equipa')" class="btn py-1 px-2 text-[10px]"><i class="fa-solid fa-pencil"></i></button>
+                                    <button onclick="showToast('Eliminar Equipa')" class="btn py-1 px-2 text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                            
+                            <h4 class="text-[11px] font-bold text-slate-700">Membros e Responsabilidades</h4>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-[10px] uppercase text-slate-500 border-b">
+                                            <th class="p-2">Membro</th>
+                                            <th class="p-2">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b">
+                                            <td class="p-2 font-medium">João Santos</td>
+                                            <td class="p-2 flex gap-1">
+                                                <button onclick="showToast('Membro transferido')" class="btn py-1 px-2 text-[10px]" title="Transferir"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
+                                                <button onclick="showToast('Membro removido')" class="btn py-1 px-2 text-[10px]" title="Remover"><i class="fa-solid fa-user-minus"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="p-2 font-medium">Maria Costa</td>
+                                            <td class="p-2 flex gap-1">
+                                                <button onclick="showToast('Membro transferido')" class="btn py-1 px-2 text-[10px]" title="Transferir"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
+                                                <button onclick="showToast('Membro removido')" class="btn py-1 px-2 text-[10px]" title="Remover"><i class="fa-solid fa-user-minus"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <button onclick="showToast('Adicionar membro')" class="btn py-1.5 px-3 text-[10px] mt-2"><i class="fa-solid fa-user-plus"></i> Adicionar Membro</button>
+                        </div>
+						
+						<!-- Equipa 2 -->
+                        <div class="p-4 border-l-4 border-l-[#d9480f] border-t border-r border-b border-slate-200 rounded-r-lg space-y-3 bg-white">
+                            <div class="flex justify-between items-center">
+                                <h2 class="font-bold text-xs text-slate-800">Equipa 2</h3>
+                                <div class="flex gap-1">
+                                    <button onclick="showToast('Editar Equipa')" class="btn py-1 px-2 text-[10px]"><i class="fa-solid fa-pencil"></i></button>
+                                    <button onclick="showToast('Eliminar Equipa')" class="btn py-1 px-2 text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                            
+                            <h4 class="text-[11px] font-bold text-slate-700">Membros e Responsabilidades</h4>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-[10px] uppercase text-slate-500 border-b">
+                                            <th class="p-2">Membro</th>
+                                            <th class="p-2">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b">
+                                            <td class="p-2 font-medium">Ana Ferreira</td>
+                                            <td class="p-2 flex gap-1">
+                                                <button onclick="showToast('Membro transferido')" class="btn py-1 px-2 text-[10px]" title="Transferir"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
+                                                <button onclick="showToast('Membro removido')" class="btn py-1 px-2 text-[10px]" title="Remover"><i class="fa-solid fa-user-minus"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <button onclick="showToast('Adicionar membro')" class="btn py-1.5 px-3 text-[10px] mt-2"><i class="fa-solid fa-user-plus"></i> Adicionar Membro</button>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ================= 11. PÁGINA: GERIR CONTA ================= -->
+                <section id="page-settings" class="view-panel hidden space-y-6">
+					<!-- Card principal com border-radius arredondado e borda suave -->
+					<div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-full space-y-5">
+						<div class="border-b border-slate-100 pb-3">
+							<h2 class="text-sm font-bold text-slate-900">Informações de Perfil</h2>
+						</div>
+						
+						<!-- Bloco Informações Pessoais (com barra lateral laranja exposta e sem borda esquerda) -->
+						<div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex">
+							<div class="w-1 bg-[#d9480f] flex-shrink-0"></div>
+							<div class="p-4 space-y-1 text-xs w-full">
+								<h4 class="font-bold text-slate-900 text-sm mb-2">Informações Pessoais</h4>
+								<p class="text-slate-500">Email: <span id="settings-email-display">xxxxx@xxx.xx</span></p>
+								<p class="text-slate-500">Password: •••••••</p>
+							</div>
+						</div>
+
+						<!-- Bloco Dados Pessoais (com barra lateral laranja exposta e sem borda esquerda) -->
+						<div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex">
+							<div class="w-1 bg-[#d9480f] flex-shrink-0"></div>
+							<div class="p-4 space-y-1 text-xs w-full">
+								<h4 class="font-bold text-slate-900 text-sm mb-2">Dados Pessoais</h4>
+								<p class="text-slate-500">Nome: XXXXXX</p>
+								<p class="text-slate-500">Data de Nascimento: XX/XX/XXXX</p>
+								<p class="text-slate-500">Número de Telemóvel: +351 XXX XXX XXX</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Botões de Ação alinhados à direita, fora do card principal e com estilo maiúsculo arredondado -->
+					<div class="flex flex-wrap gap-3 justify-end pt-2">
+						<button onclick="showToast('Editar perfil ativado')" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition shadow-sm">
+							<i class="fa-solid fa-pencil"></i> Editar Perfil
+						</button>
+						<button onclick="openModal('Excluir Conta', 'Tem a certeza que pretende excluir definitivamente a sua conta?', () => showToast('Ação cancelada pelo sistema'))" class="px-5 py-2.5 rounded-xl bg-[#d9480f] hover:bg-[#c23d08] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition shadow-sm">
+							<i class="fa-solid fa-trash"></i> Excluir Conta
+						</button>
+						<button onclick="handleLogout()" class="px-5 py-2.5 rounded-xl bg-[#d9480f] hover:bg-[#c23d08] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition shadow-sm">
+							<i class="fa-solid fa-right-from-bracket"></i> Terminar Sessão
+						</button>
+					</div>
+				</section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 3. LOGICA JAVASCRIPT DA APLICAÇÃO (SPA STATE & ROUTING) -->
+    <!-- ========================================================================= -->
+    <script>
+        // Estado Global da Aplicação SPA
+        const state = {
+            currentUser: null,
+            currentView: 'dashboard',
+            currentWorkspace: 'workspace-1',
+            requests: [
+                {
+                    id: '#FT-X',
+                    title: 'Exportação Relatórios PDF',
+                    tag: 'Relatórios',
+                    votes: 12,
+                    status: 'PENDING',
+                    description: 'Exportação de relatórios avançados de desempenho em formato PDF.',
+                    upvotes: 12,
+                    downvotes: 1,
+                    comments: [
+                        { author: '@João Santos', time: '10:30', text: 'Concordo, podemos avançar com esta integração no próximo ciclo.' }
+                    ]
+                },
+                {
+                    id: '#FT-Y',
+                    title: 'Autenticação SSO',
+                    tag: 'Segurança',
+                    votes: 28,
+                    status: 'PENDING',
+                    description: 'Permitir login corporativo utilizando credenciais Google e GitHub integradas via protocolo OAuth2/SSO.',
+                    upvotes: 28,
+                    downvotes: 2,
+                    comments: [
+                        { author: '@João Santos', time: '10:30', text: 'Concordo, podemos avançar com esta integração no próximo ciclo.' },
+                        { author: '@Maria Costa', time: '10:45', text: 'Confirmo, desde que a revisão das permissões seja concluída.' }
+                    ]
+                }
+            ]
+        };
+
+        // --- NAVEGAÇÃO DE AUTENTICAÇÃO ---
+
+        function toggleAuthView(view) {
+            const loginBox = document.getElementById('view-login');
+            const regBox = document.getElementById('view-register');
+            const heroLogin = document.getElementById('auth-hero-login');
+            const heroReg = document.getElementById('auth-hero-register');
+
+            if (view === 'register') {
+                loginBox.classList.add('hidden');
+                regBox.classList.remove('hidden');
+                heroLogin.classList.add('hidden');
+                heroReg.classList.remove('hidden');
+            } else {
+                regBox.classList.add('hidden');
+                loginBox.classList.remove('hidden');
+                heroReg.classList.add('hidden');
+                heroLogin.classList.remove('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            
+            state.currentUser = { email: email, role: 'Product Owner' };
+            
+            // Atualizar UI do utilizador
+            document.getElementById('user-display-email').innerText = email;
+            document.getElementById('settings-email-display').innerText = email;
+            document.getElementById('user-avatar-initials').innerText = email.substring(0,2).toUpperCase();
+
+            // Alternar para Tela Principal (Dashboard)
+            document.getElementById('auth-flow').classList.add('hidden');
+            document.getElementById('app-flow').classList.remove('hidden');
+
+            showToast(`Sessão iniciada como ${email}`);
+            renderRequestsTables();
+            renderVotingCards();
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+            const passConf = document.getElementById('reg-pass-confirm').value;
+
+            if (pass !== passConf) {
+                showToast('As palavras-passe não coincidem!', 'error');
+                return;
+            }
+
+            state.currentUser = { email: email, role: 'Product Owner' };
+            
+            document.getElementById('user-display-email').innerText = email;
+            document.getElementById('settings-email-display').innerText = email;
+            document.getElementById('user-avatar-initials').innerText = email.substring(0,2).toUpperCase();
+
+            document.getElementById('auth-flow').classList.add('hidden');
+            document.getElementById('app-flow').classList.remove('hidden');
+
+            showToast('Conta registada com sucesso!');
+            renderRequestsTables();
+            renderVotingCards();
+        }
+
+        function handleLogout() {
+            openModal('Terminar Sessão', 'Deseja realmente sair da sua conta?', () => {
+                state.currentUser = null;
+                document.getElementById('app-flow').classList.add('hidden');
+                document.getElementById('auth-flow').classList.remove('hidden');
+                toggleAuthView('login');
+                showToast('Sessão terminada.');
+            });
+        }
+
+        // --- ROUTING INTERNO DA SPA ---
+
+        function navigateTo(viewId, event) {
+            if (event) event.preventDefault();
+            
+            state.currentView = viewId;
+
+            // Esconder todas as vistas
+            document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
+            
+            // Mostrar vista ativa
+            const target = document.getElementById(`page-${viewId}`);
+            if (target) target.classList.remove('hidden');
+
+            // Atualizar realce na sidebar
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const activeNav = document.getElementById(`nav-${viewId}`);
+            if (activeNav) {
+                activeNav.classList.add('active');
+            }
+
+            // Títulos da barra superior
+            const titles = {
+                'dashboard': ['Dashboard Principal', 'Visão geral unificada do projeto'],
+                'requests-list': ['Lista de Pedidos de Funcionalidades', 'Gestão de aprovações e ciclo de vida'],
+                'voting': ['Pedidos e Votação', 'Discussão direta com a comunidade'],
+                'submit-request': ['Submeter Novo Pedido', 'Criação de novos requisitos para o sistema'],
+                'backlog': ['Gestão do Product Backlog', 'Priorização Kanban e tarefas'],
+                'sprints': ['Sprint Board & Requisitos', 'Planeamento de iterações e histórias'],
+                'roadmap': ['Roadmap Visual & Estatísticas', 'Linha do tempo e entregas'],
+                'teams': ['Gestão de Equipas e Papéis SCRUM', 'Workspaces e estrutura da equipa'],
+                'settings': ['Configuração de Conta', 'Definições do perfil de utilizador']
+            };
+
+            if (titles[viewId]) {
+                document.getElementById('page-header-title').innerText = titles[viewId][0];
+                document.getElementById('page-header-subtitle').innerText = titles[viewId][1];
+            }
+        }
+
+        function changeWorkspace(wsValue) {
+            state.currentWorkspace = wsValue;
+            showToast(`Workspace alterado para ${wsValue}`);
+        }
+
+        // --- RENDERIZAÇÃO DE DADOS ---
+
+        function renderRequestsTables(filterTag = 'ALL') {
+            const pendingBody = document.getElementById('table-pending-body');
+            const approvedBody = document.getElementById('table-approved-body');
+            const rejectedBody = document.getElementById('table-rejected-body');
+
+            if (!pendingBody) return;
+
+            pendingBody.innerHTML = '';
+            approvedBody.innerHTML = '';
+            rejectedBody.innerHTML = '';
+
+            state.requests.forEach((req, index) => {
+                if (filterTag !== 'ALL' && req.tag !== filterTag) return;
+
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-slate-100 hover:bg-slate-50 transition';
+
+                if (req.status === 'PENDING') {
+                    tr.innerHTML = `
+                        <td class="p-2.5"><strong>${req.id}</strong></td>
+                        <td class="p-2.5">${req.title}</td>
+                        <td class="p-2.5"><span class="tag">${req.tag}</span></td>
+                        <td class="p-2.5 font-bold">${req.votes}</td>
+                        <td class="p-2.5"><button onclick="updateRequestStatus(${index}, 'APPROVED')" class="btn py-1 px-2 text-[10px]"><i class="fas fa-check"></i></button></td>
+                        <td class="p-2.5"><button onclick="updateRequestStatus(${index}, 'REJECTED')" class="btn btn-outline py-1 px-2 text-[10px]"><i class="fas fa-times"></i></button></td>
+                        <td class="p-2.5"><button onclick="deleteRequest(${index})" class="btn btn-outline py-1 px-2 text-[10px] text-red-600"><i class="fas fa-trash"></i></button></td>
+                    `;
+                    pendingBody.appendChild(tr);
+                } else if (req.status === 'APPROVED') {
+                    tr.innerHTML = `
+                        <td class="p-2.5"><strong>${req.id}</strong></td>
+                        <td class="p-2.5">${req.title}</td>
+                        <td class="p-2.5"><span class="tag">${req.tag}</span></td>
+                        <td class="p-2.5 font-bold">${req.votes}</td>
+                        <td class="p-2.5"><span class="tag bg-blue-100 text-blue-700">Backlog</span></td>
+                        <td class="p-2.5"><button onclick="showToast('Editar pedido')" class="btn btn-outline py-1 px-2 text-[10px]"><i class="fas fa-pencil"></i></button></td>
+                        <td class="p-2.5"><button onclick="deleteRequest(${index})" class="btn btn-outline py-1 px-2 text-[10px] text-red-600"><i class="fas fa-trash"></i></button></td>
+                    `;
+                    approvedBody.appendChild(tr);
+                } else if (req.status === 'REJECTED') {
+                    tr.innerHTML = `
+                        <td class="p-2.5"><strong>${req.id}</strong></td>
+                        <td class="p-2.5">${req.title}</td>
+                        <td class="p-2.5"><span class="tag">${req.tag}</span></td>
+                        <td class="p-2.5 font-bold">${req.votes}</td>
+                        <td class="p-2.5"><span class="tag bg-red-100 text-red-700">Rejeitado</span></td>
+                        <td class="p-2.5"><button onclick="showToast('Editar pedido')" class="btn btn-outline py-1 px-2 text-[10px]"><i class="fas fa-pencil"></i></button></td>
+                        <td class="p-2.5"><button onclick="deleteRequest(${index})" class="btn btn-outline py-1 px-2 text-[10px] text-red-600"><i class="fas fa-trash"></i></button></td>
+                    `;
+                    rejectedBody.appendChild(tr);
+                }
+            });
+        }
+
+        function filterRequestsTable(val) {
+            renderRequestsTables(val);
+        }
+
+        function updateRequestStatus(index, newStatus) {
+            state.requests[index].status = newStatus;
+            showToast(`Estado alterado para ${newStatus}`);
+            renderRequestsTables();
+        }
+
+        function deleteRequest(index) {
+            openModal('Confirmar Remoção', 'Deseja realmente eliminar este pedido?', () => {
+                state.requests.splice(index, 1);
+                showToast('Pedido removido.');
+                renderRequestsTables();
+                renderVotingCards();
+            });
+        }
+
+        function handleCreateRequest(e) {
+            e.preventDefault();
+            const title = document.getElementById('req-title').value;
+            const tag = document.getElementById('req-tag').value;
+            const desc = document.getElementById('req-desc').value;
+
+            const newReq = {
+                id: `#FT-${Math.floor(100 + Math.random() * 900)}`,
+                title: title,
+                tag: tag,
+                votes: 1,
+                status: 'PENDING',
+                description: desc,
+                upvotes: 1,
+                downvotes: 0,
+                comments: []
+            };
+
+            state.requests.unshift(newReq);
+            showToast('Pedido submetido com sucesso!');
+            
+            document.getElementById('req-title').value = '';
+            document.getElementById('req-desc').value = '';
+            
+            navigateTo('requests-list');
+            renderRequestsTables();
+            renderVotingCards();
+        }
+
+        function renderVotingCards() {
+            const container = document.getElementById('voting-cards-container');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            state.requests.forEach((req, reqIdx) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3';
+                
+                let commentsHtml = req.comments.map(c => `
+                    <div class="bg-slate-50 p-2.5 rounded-md text-xs space-y-1">
+                        <div class="flex justify-between font-bold text-slate-800">
+                            <span>${c.author}</span>
+                            <span class="text-[10px] text-slate-400 font-normal">· ${c.time}</span>
+                        </div>
+                        <p class="text-slate-600">${c.text}</p>
+                    </div>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <h2 class="text-xs font-bold text-slate-800">${req.title} (${req.id})</h2>
+                        <div class="flex gap-2">
+                            <button onclick="vote(${reqIdx}, 'up')" class="btn py-1 px-2.5 text-[10px]"><i class="fa-solid fa-thumbs-up"></i> Quero (${req.upvotes})</button>
+                            <button onclick="vote(${reqIdx}, 'down')" class="btn btn-outline py-1 px-2.5 text-[10px]"><i class="fa-solid fa-thumbs-down"></i> Não Quero (${req.downvotes})</button>
+                        </div>
+                    </div>
+                    
+                    <p class="text-xs text-slate-700">${req.description}</p>
+                    
+                    <div class="border border-orange-200 bg-orange-50/60 p-2.5 rounded-md text-xs text-orange-900 font-medium">
+                        <strong><i class="fa-solid fa-wand-magic-sparkles"></i> Sugestão da IA:</strong>
+                        Alta prioridade recomendada devido ao volume expressivo de solicitações semelhantes.
+                    </div>
+
+                    <div class="flex gap-2">
+                        <span class="tag"><i class="fa-solid fa-check"></i> ${req.status}</span>
+                        <span class="tag bg-blue-50 text-blue-700"><i class="fa-solid fa-shield-halved"></i> ${req.tag}</span>
+                    </div>
+
+                    <div class="space-y-2 pt-2 border-t border-slate-100">
+                        ${commentsHtml}
+                        <div class="flex gap-2 mt-2">
+                            <textarea id="comment-input-${reqIdx}" placeholder="Escreva um comentário..." rows="1" class="flex-1 p-2 border border-slate-200 rounded-md text-xs outline-none focus:border-orange-500"></textarea>
+                            <button onclick="addComment(${reqIdx})" class="btn px-3"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function vote(reqIdx, type) {
+            if (type === 'up') {
+                state.requests[reqIdx].upvotes++;
+                state.requests[reqIdx].votes++;
+            } else {
+                state.requests[reqIdx].downvotes++;
+            }
+            renderVotingCards();
+            showToast('Voto registado com sucesso!');
+        }
+
+        function addComment(reqIdx) {
+            const input = document.getElementById(`comment-input-${reqIdx}`);
+            if (!input || !input.value.trim()) return;
+
+            state.requests[reqIdx].comments.push({
+                author: state.currentUser ? state.currentUser.email : '@Utilizador',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                text: input.value
+            });
+
+            input.value = '';
+            renderVotingCards();
+            showToast('Comentário registado!');
+        }
+
+        function toggleDetails(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('hidden');
+        }
+
+        // --- SISTEMA DE UTILS (MODAL & TOASTS) ---
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fa-solid fa-circle-info text-orange-400"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        let pendingModalAction = null;
+
+        function openModal(title, bodyText, onConfirm) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerText = bodyText;
+            pendingModalAction = onConfirm;
+            document.getElementById('generic-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('generic-modal').classList.add('hidden');
+        }
+
+        document.getElementById('modal-confirm-btn').addEventListener('click', () => {
+            if (pendingModalAction) pendingModalAction();
+            closeModal();
+        });
+		
+		function toggleReleaseForm() {
+			const form = document.getElementById('release-form-container');
+			if (form) {
+				form.classList.toggle('hidden');
+				if (!form.classList.contains('hidden')) {
+					form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+				}
+			}
+		}
+
+        // Inicialização
+        window.onload = function() {
+            renderRequestsTables();
+            renderVotingCards();
+        };
+    </script>
+</body>
+</html>
